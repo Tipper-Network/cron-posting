@@ -4,6 +4,7 @@
   "scripts": {
     "dev:api": "npm run start:dev --prefix apps/api",
     "dev:web": "npm run dev --prefix apps/web",
-    "build": "npm run build --prefix apps/api && npm run build --prefix apps/web"
+    "build": "npm run build --prefix apps/api && npm run build --prefix apps/web",
+    "fix-cursor": "bash script.sh"
   }
 }

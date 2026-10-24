@@ -31,9 +31,8 @@ export default async function Page() {
     <main style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 20px 64px' }}>
       <h1 style={{ fontSize: 28, margin: '0 0 8px' }}>Schedule</h1>
       <p style={{ color: '#9a9a9a' }}>
-        API {apiBase}
-        {data.today ? ` · Beirut ${data.today}` : ''}
-        {data.source ? ` · ${data.source}` : ''}
+        One <code>scheduled</code> row posts to Instagram and YouTube every 15 minutes.
+        {data.today ? ` Beirut ${data.today}.` : ''} Approved stays parked.
       </p>
       {data.error ? <p style={{ color: '#ffb4a8' }}>{data.error}</p> : null}
       <p>
