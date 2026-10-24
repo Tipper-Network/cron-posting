@@ -2,8 +2,8 @@
   "name": "cron-posting",
   "private": true,
   "scripts": {
-    "dev:api": "npm run start:dev --prefix api",
-    "dev:web": "npm run dev --prefix web",
-    "build": "npm run build --prefix api && npm run build --prefix web"
+    "dev:api": "npm run start:dev --prefix apps/api",
+    "dev:web": "npm run dev --prefix apps/web",
+    "build": "npm run build --prefix apps/api && npm run build --prefix apps/web"
   }
 }

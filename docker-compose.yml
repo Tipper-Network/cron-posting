@@ -1,8 +1,7 @@
 services:
   api:
     build:
-      context: ./api
-      network: host
+      context: ./apps/api
     restart: unless-stopped
     ports:
       - "${API_PORT:-3101}:3001"
@@ -25,8 +24,7 @@ services:
 
   web:
     build:
-      context: ./web
-      network: host
+      context: ./apps/web
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-3100}:3000"

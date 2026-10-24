@@ -3,5 +3,5 @@ dist
 .next
 .env
 *.log
-api/dist
-web/.next
+apps/api/dist
+apps/web/.next
