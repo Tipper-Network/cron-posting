@@ -51,7 +51,7 @@ export default async function Page() {
           </span>
         ))}
       </p>
-      <h2>Due now ({data.due?.length ?? 0})</h2>
+      <h2>Due Today ({data.due?.length ?? 0})</h2>
       <Table rows={data.due || []} />
       <h2>Still to post</h2>
       <Table rows={upcoming} />
