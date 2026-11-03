@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { TokenStoreService } from '../auth/token-store.service';
 import {
   errorDetail,
   instagramCollaborators,
@@ -12,9 +13,11 @@ const GRAPH = 'https://graph.facebook.com/v20.0';
 export class InstagramService {
   private readonly logger = new Logger(InstagramService.name);
 
+  constructor(private readonly tokens: TokenStoreService) {}
+
   async ping(): Promise<{ ok: boolean; username: string; detail: string }> {
     try {
-      const { igId, token } = this.config();
+      const { igId, token } = await this.config();
       const data = await graphGet<{ id?: string; username?: string }>(
         `/${igId}?fields=id,username&access_token=${encodeURIComponent(token)}`,
       );
@@ -29,7 +32,7 @@ export class InstagramService {
 
   /** Create Reel container, wait until FINISHED, publish. Returns the public permalink. */
   async publishReel(videoUrl: string, caption: string): Promise<string> {
-    const { igId, token } = this.config();
+    const { igId, token } = await this.config();
     const payload = new URLSearchParams({
       media_type: 'REELS',
       video_url: videoUrl,
@@ -78,10 +81,14 @@ export class InstagramService {
     return `graph:${mediaId}`;
   }
 
-  private config(): { igId: string; token: string } {
+  private async config(): Promise<{ igId: string; token: string }> {
     const igId = process.env.IG_BUSINESS_ID || '';
-    const token = process.env.META_ACCESS_TOKEN || process.env.IG_ACCESS_TOKEN || '';
-    if (!igId || !token) throw new Error('Set IG_BUSINESS_ID and META_ACCESS_TOKEN');
+    const token = await this.tokens.instagramAccessToken();
+    if (!igId || !token) {
+      throw new Error(
+        'Instagram not connected. Set IG_BUSINESS_ID, then open /oauth/instagram?gate=…',
+      );
+    }
     return { igId, token };
   }
 }

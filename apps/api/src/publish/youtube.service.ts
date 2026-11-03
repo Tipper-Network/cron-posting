@@ -1,15 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createReadStream, existsSync, readFileSync } from 'fs';
 import { google } from 'googleapis';
+import { TokenStoreService } from '../auth/token-store.service';
 import { errorDetail } from './text';
 
 @Injectable()
 export class YoutubeService {
   private readonly logger = new Logger(YoutubeService.name);
 
+  constructor(private readonly tokens: TokenStoreService) {}
+
   async ping(): Promise<{ ok: boolean; channel: string; id: string; detail: string }> {
     try {
-      const youtube = google.youtube({ version: 'v3', auth: this.auth() });
+      const youtube = google.youtube({ version: 'v3', auth: await this.auth() });
       const listed = await youtube.channels.list({ part: ['snippet'], mine: true });
       const channel = listed.data.items?.[0];
       if (!channel?.id) throw new Error('YouTube token has no channel');
@@ -38,7 +41,7 @@ export class YoutubeService {
     description: string;
     tags: string[];
   }): Promise<{ url: string; caption: string }> {
-    const youtube = google.youtube({ version: 'v3', auth: this.auth() });
+    const youtube = google.youtube({ version: 'v3', auth: await this.auth() });
     const inserted = await youtube.videos.insert({
       part: ['snippet', 'status'],
       requestBody: {
@@ -79,14 +82,15 @@ export class YoutubeService {
     }
   }
 
-  private auth() {
+  private async auth() {
     const fromFile = tokenFromPath(process.env.YOUTUBE_TOKEN_PATH);
     const clientId = fromFile?.client_id || process.env.YOUTUBE_CLIENT_ID;
     const clientSecret = fromFile?.client_secret || process.env.YOUTUBE_CLIENT_SECRET;
-    const refreshToken = fromFile?.refresh_token || process.env.YOUTUBE_REFRESH_TOKEN;
+    const refreshToken =
+      fromFile?.refresh_token || (await this.tokens.youtubeRefreshToken());
     if (!clientId || !clientSecret || !refreshToken) {
       throw new Error(
-        'Set YOUTUBE_TOKEN_PATH or YOUTUBE_CLIENT_ID + YOUTUBE_CLIENT_SECRET + YOUTUBE_REFRESH_TOKEN',
+        'YouTube not connected. Set YOUTUBE_CLIENT_ID + YOUTUBE_CLIENT_SECRET, then open /oauth/youtube?gate=…',
       );
     }
     const client = new google.auth.OAuth2(clientId, clientSecret);

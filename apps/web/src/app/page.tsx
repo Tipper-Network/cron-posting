@@ -1,3 +1,5 @@
+import { ConnectPanel } from './connect';
+
 type Row = Record<string, string>;
 
 type Schedule = {
@@ -9,9 +11,27 @@ type Schedule = {
   error?: string;
 };
 
+type OauthStatus = {
+  public_api_url?: string;
+  gate_required?: boolean;
+  tokens?: {
+    youtube?: { connected?: boolean; source?: string; updated_at?: string };
+    instagram?: {
+      connected?: boolean;
+      source?: string;
+      expires_at?: string;
+      days_left?: number;
+    };
+  };
+  youtube_ping?: { ok?: boolean; channel?: string; detail?: string };
+  instagram_ping?: { ok?: boolean; username?: string; detail?: string };
+  sheets_hint?: string;
+  error?: string;
+};
+
 const apiBase = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3001';
 
-async function load(): Promise<Schedule> {
+async function loadSchedule(): Promise<Schedule> {
   try {
     const response = await fetch(`${apiBase}/schedule`, { cache: 'no-store' });
     if (!response.ok) return { error: `API ${response.status}` };
@@ -21,8 +41,27 @@ async function load(): Promise<Schedule> {
   }
 }
 
-export default async function Page() {
-  const data = await load();
+async function loadOauth(): Promise<OauthStatus> {
+  try {
+    const response = await fetch(`${apiBase}/oauth/status`, { cache: 'no-store' });
+    if (!response.ok) return { error: `API ${response.status}` };
+    return (await response.json()) as OauthStatus;
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'API unreachable' };
+  }
+}
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) || {};
+  const oauthPlatform = asString(params.oauth);
+  const oauthResult = asString(params.result);
+  const oauthDetail = asString(params.detail);
+
+  const [data, oauth] = await Promise.all([loadSchedule(), loadOauth()]);
   const upcoming = (data.rows || [])
     .filter((row) => (row.status || '').toLowerCase() !== 'posted')
     .slice(0, 40);
@@ -34,7 +73,14 @@ export default async function Page() {
         One <code>scheduled</code> row posts to Instagram and YouTube every 15 minutes.
         {data.today ? ` Beirut ${data.today}.` : ''} Approved stays parked.
       </p>
+      {oauthPlatform ? (
+        <p style={{ color: oauthResult === 'ok' ? '#9dffa8' : '#ffb4a8' }}>
+          {oauthPlatform} {oauthResult}
+          {oauthDetail ? ` — ${oauthDetail}` : ''}
+        </p>
+      ) : null}
       {data.error ? <p style={{ color: '#ffb4a8' }}>{data.error}</p> : null}
+      <ConnectPanel initial={oauth} apiBase={apiBase} />
       <p>
         {Object.entries(data.counts || {}).map(([name, count]) => (
           <span
@@ -57,6 +103,11 @@ export default async function Page() {
       <Table rows={upcoming} />
     </main>
   );
+}
+
+function asString(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] || '';
+  return value || '';
 }
 
 function Table({ rows }: { rows: Row[] }) {

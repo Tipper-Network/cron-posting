@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health.controller';
 import { PublishModule } from './publish/publish.module';
 import { S3Module } from './s3/s3.module';
@@ -8,7 +9,7 @@ import { ScheduleBoardController } from './schedule/schedule.controller';
 import { SheetsModule } from './sheets/sheets.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), SheetsModule, S3Module, PublishModule],
+  imports: [ScheduleModule.forRoot(), SheetsModule, S3Module, PublishModule, AuthModule],
   controllers: [HealthController, ScheduleBoardController],
   providers: [ClockService],
 })

@@ -4,7 +4,10 @@ WORKDIR /app
 COPY apps/api/package.json apps/api/package-lock.json ./
 RUN npm install --include=dev
 COPY apps/api/ ./
-RUN npx nest build
+# Host tsbuildinfo makes nest exit 0 without writing dist (incremental skip).
+RUN rm -f tsconfig.tsbuildinfo \
+  && npx nest build \
+  && test -f dist/main.js
 
 FROM node:22-alpine AS production
 WORKDIR /app

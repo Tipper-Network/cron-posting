@@ -3,6 +3,7 @@ import {
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
+  PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { createWriteStream } from 'fs';
@@ -114,15 +115,42 @@ export class S3Service {
     }
   }
 
+  async getText(key: string): Promise<string | null> {
+    try {
+      const result = await this.client().send(
+        new GetObjectCommand({ Bucket: this.bucket(), Key: key }),
+      );
+      if (!result.Body) return null;
+      return await result.Body.transformToString();
+    } catch (error) {
+      const status = (error as { $metadata?: { httpStatusCode?: number }; name?: string })
+        .$metadata?.httpStatusCode;
+      const name = (error as { name?: string }).name;
+      if (status === 404 || name === 'NotFound' || name === 'NoSuchKey') return null;
+      throw error;
+    }
+  }
+
+  async putText(key: string, body: string, contentType = 'application/json'): Promise<void> {
+    await this.client().send(
+      new PutObjectCommand({
+        Bucket: this.bucket(),
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      }),
+    );
+  }
+
   bucket(): string {
     return process.env.S3_BUCKET || process.env.S3_BUCKET_NAME || '';
   }
 
-  private prefix(): string {
+  prefix(): string {
     return (process.env.S3_PREFIX || 'socials').replace(/^\/+|\/+$/g, '');
   }
 
-  private region(): string {
+  region(): string {
     return process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'eu-north-1';
   }
 }
