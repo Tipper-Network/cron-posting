@@ -76,9 +76,15 @@ export function ConnectPanel({
     >
       <h2 style={{ margin: '0 0 8px', fontSize: 20 }}>Connect</h2>
       <p style={{ color: '#9a9a9a', marginTop: 0 }}>
-        Sign in on the API. Refresh tokens land in private S3. Sheets should use a service
-        account, not this flow.
+        Live board only. Sign in once; refresh tokens land in private S3. Sheets use a
+        service account, not this flow.
       </p>
+      {status.gate_required === false ? (
+        <p style={{ color: '#ffb4a8' }}>
+          Dokploy API has no <code>OAUTH_GATE</code> yet. Set it on the API service, redeploy,
+          then paste the same value below.
+        </p>
+      ) : null}
       {status.error ? <p style={{ color: '#ffb4a8' }}>{status.error}</p> : null}
       <p style={{ fontSize: 14 }}>
         YouTube:{' '}
