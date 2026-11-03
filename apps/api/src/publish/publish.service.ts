@@ -118,11 +118,16 @@ export class PublishService {
           srtPath = await this.s3.download(srtKey);
           files.push(srtPath);
         }
+        const title = youtubeTitle(row);
+        const description = youtubeDescription(row);
+        this.logger.log(
+          `youtube upload ${label} title=${JSON.stringify(title).slice(0, 120)} details_len=${description.length}`,
+        );
         const uploaded = await this.youtube.upload({
           filePath: videoPath,
           srtPath,
-          title: youtubeTitle(row),
-          description: youtubeDescription(row),
+          title,
+          description,
           tags: youtubeTags(row.hashtags || ''),
         });
         youtubeUrl = uploaded.url;
